@@ -1,0 +1,4 @@
+requests
+gitpython
+flask
+curl-cffi

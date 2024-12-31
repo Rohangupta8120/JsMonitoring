@@ -1,0 +1,232 @@
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+        <script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+        <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css" integrity="sha512-YWzhKL2whUzgiheMoBFwW8CKV4qpHQAEuvilg9FAn5VJUDwKZZxkJNuGM4XkWuk94WCrrwslk8yWNGmY1EduTA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    </head>
+    <body>
+		<ul class="nav nav-tabs" id="myTab" role="tablist">
+		  <li class="nav-item">
+			<a class="nav-link active" id="dashboard-tab" data-toggle="tab" href="#dashboard" role="tab" aria-controls="dashboard" aria-selected="true">Dashboard</a>
+		  </li>
+		  <li class="nav-item">
+			<a class="nav-link" id="fileMonitors-tab" data-toggle="tab" href="#fileMonitors" role="tab" aria-controls="fileMonitors" aria-selected="false">FileMonitors</a>
+		  </li>
+		</ul>
+
+		<!-- Tab panes -->
+		<div id=tabContent class="tab-content">
+			<div class="tab-pane active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+				<table id=alertsTable class="table table-hover">
+				</table>
+			</div>
+			<div class="tab-pane" id="fileMonitors" role="tabpanel" aria-labelledby="fileMonitors-tab">
+				<table id=fileMonitorsTable class="table table-hover">
+				</table>
+			</div>
+		</div>
+<div class="input-group input-group-sm mb-3" style="width:20em;position:fixed;top:0;right:0;">
+      <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-sm">User</span>
+                </div>
+                  <input id=username type="text" class="form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm" style="width:100px">
+</div>
+
+<script>
+document.getElementById("username").value = localStorage.getItem("username");
+document.getElementById("username").addEventListener('input', function (evt) {
+    localStorage.setItem("username", evt.target.value);
+    console.log(evt);
+});
+var formatBbpTitle = function(value, row){
+    let res = '<a href="'+row.bbpUrl+'">'+row.title+'</a>';
+    console.log(res, row.title);
+    return res
+}
+
+var formatTitle = function(value, row){
+    let res = '<a href="https://github.com/YOUR_GITHUB_USERNAME/kanshiFiles/commit/'+row.gitCommit+'">'+row.title+'</a>';
+    return res
+}
+
+var formatCompany = function(value, row){
+    let res = '<a href="'+row.bbpUrl+'">'+row.company+'</a>';
+    return res
+}
+
+var formatLink = function(value, row){
+    let res = '<a href="'+value+'">'+value+'</a>';
+    return res
+}
+
+var stateFormatter= function(value, row, index){
+    console.log(value, row)
+    if (value=="unseen" || value == undefined){
+        return '<button type="button" class="btn btn-primary" onclick="claimRow('+index+', \''+row.gitCommit+'\')"><i class="fas fa-arrow-circle-right"></i>&nbsp;claim</button>'
+    }
+}
+var stateFormatterClaimed= function(value, row, index){
+    return '<button style="margin:5px;" type="button" class="btn btn-success" onclick="reportRow('+index+', \''+row.gitCommit+'\',\'vuln\')"><i class="fas fa-check"></i>&nbsp;Vuln</button><button type="button" class="btn btn-danger" onclick="reportRow('+index+', \''+row.gitCommit+'\',\'notVuln\')"><i class="fas fa-times"></i>&nbsp;Not Vuln</button>'
+}
+
+var claimRow = function(rowId, commit){
+    if (localStorage.getItem("username") == undefined || localStorage.getItem("username").length < 1){
+        alert("Please enter your username at the top right hand corner first.")
+        return
+    }
+    fetch("./api/claim?gitCommit="+commit+"&user="+localStorage.getItem("username")).then((a)=>{a.json()}).then((a)=>{
+        console.log("how mahy times", rowId);
+        $('#alertsTable').bootstrapTable('remove', {
+          field: '$index',
+          values: [rowId]
+        });
+        dynTables();
+        if ($('#'+localStorage.getItem("username")+'Table') != undefined){
+        $('#'+localStorage.getItem('username')+'Table').bootstrapTable('refresh')
+        }
+    })
+}
+
+var reportRow = function(rowId, commit, state){
+    fetch("./api/report?gitCommit="+commit+"&user="+localStorage.getItem("username")+"&state="+state).then((a)=>{a.json()}).then((a)=>{
+        $('#'+localStorage.getItem('username')+'Table').bootstrapTable('remove', {
+          field: '$index',
+          values: [rowId]
+        });
+        //$('#'+localStorage.getItem('username')+'Table').bootstrapTable('refresh')
+    })
+}
+
+$('#alertsTable').bootstrapTable({
+  url: "./api/alerts",
+  columns: [{
+    field: 'gitCommit',
+    title: 'gitCommit',
+    visible: false
+  }, {
+    field: 'title',
+    title: 'Title',
+    formatter: formatTitle,
+  }, {
+    field: 'company',
+    title: 'Company',
+    formatter: formatCompany
+  }, {
+    field: 'jsFile',
+    title: 'JS File',
+    formatter: formatLink
+  }, {
+    field: 'regex',
+    title: 'Regex'
+  }, {
+    field: 'severity',
+    title: 'Severity'
+  }, {
+    field: 'createdAt',
+    title: 'Created'
+  }, {
+    field: 'state',
+    title: 'State',
+    formatter: stateFormatter
+  }],
+})
+
+
+
+$('#fileMonitorsTable').bootstrapTable({
+  url: "./api/filemonitors",
+  columns: [{
+    field: 'title',
+    title: 'Title',
+    formatter: formatBbpTitle
+  }, {
+    field: 'bbpUrl',
+    title: 'bbpUrl',
+    visible: false
+  }, {
+    field: 'company',
+    title: 'Company'
+  }, {
+    field: 'frequency',
+    title: 'Frequency'
+  }, {
+    field: 'lastRun',
+    title: 'Last Run'
+  }, {
+    field: 'createdAt',
+    title: 'Created'
+  }],
+})
+
+var dynTables = function(){
+    fetch("./api/tables").then((r)=>r.json()).then((r)=>{
+        for(let i =0; i< r.length; i++){
+            let user = r[i];
+            if (document.getElementById(user+"Table")!=undefined){
+                continue
+            }
+            let tabCode = `
+                <li class="nav-item"> 
+                <a class="nav-link" id="${user}Table-tab" data-toggle="tab" href="#${user}" role="tab" aria-controls="${user}" aria-selected="false">${user}'s Table</a>
+                </li>
+                `
+            let tableCode = `
+                <div class="tab-pane" id="${user}" role="tabpanel" aria-labelledby="${user}Table-tab">
+                    <table id=${user}Table class="table table-hover">
+                    </table>
+                </div>
+                `
+            $("#myTab").append(tabCode);
+            $("#tabContent").append(tableCode);
+            $('#'+user+'Table').bootstrapTable({
+              url: "./api/alerts?user="+user,
+              columns: [{
+                field: 'gitCommit',
+                title: 'gitCommit',
+                visible: false
+              }, {
+                field: 'title',
+                title: 'Title',
+                formatter: formatTitle,
+              }, {
+                field: 'company',
+                title: 'Company',
+                formatter: formatCompany
+              }, {
+                field: 'jsFile',
+                title: 'JS File',
+                formatter: formatLink
+              }, {
+                field: 'regex',
+                title: 'Regex'
+              }, {
+                field: 'severity',
+                title: 'Severity'
+              }, {
+                field: 'createdAt',
+                title: 'Created'
+              }, {
+                field: 'state',
+                title: 'State',
+                formatter: stateFormatterClaimed
+              }],
+            });
+            $('#myTab a').on('click', function (e) {
+              e.preventDefault()
+              $(this).tab('show')
+            });
+        }
+    });
+}
+dynTables();
+
+$('#myTab a').on('click', function (e) {
+  e.preventDefault()
+  $(this).tab('show')
+})
+</script>
+</body>
+</html>

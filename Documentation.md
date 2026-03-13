@@ -12,9 +12,9 @@
 
 ## Installation
 First we will need to install all the requirements with `pip install -r requirements.txt`.
-This project also relies on `pprettier` to beautify the JS files. You can install it with `npm install -g @mixer/parallel-prettier`.
+This project also relies on `prettier` to beautify the JS files. You can install it with `npm install -g @mixer/parallel-prettier`.
 
-Next, we will need to create a git repository to store our monitored files in. This should probably be a private repository and use private key based authentication (without a password) to push to it. The repository name can be overridden in each procurement module by changing the `gitRepoDir` variable, but id recommend keeping it named `kanshiFiles`.
+Next, we will need to create a git repository to store our monitored files in. This should probably be a private repository and use private key based authentication (without a password) to push to it. The repository name can be overridden in each procurement module by changing the `gitRepoDir` variable, but I'd recommend keeping it named `kanshiFiles`.
 So, clone that into the base of this project with `git clone ssh://git@github.com/YOUR_GITHUB_USERNAME/kanshiFiles.git`.
 
 Next, we'll do the preliminary run of `knsh.py` which will build the DB. 
@@ -51,7 +51,7 @@ There is a bit of a half-baked functionality for sub files (chunked JS files) in
 
 ##   Terminology
 * `fileMonitor`: A file monitor is a database entry that contains the configuration for a JS file that will be monitored.
-* `procurementModule`: A procurement module is a python program that will be used to retrieve the JS file that will be monitored. In the simples case, this will just be a static file. In a more complex case, the JS file may have to be extract from an HTML page or retrieved via an auth module/session refresh module.
+* `procurementModule`: A procurement module is a python program that will be used to retrieve the JS file that will be monitored. In the simplest case, this will just be a static file. In a more complex case, the JS file may have to be extract from an HTML page or retrieved via an auth module/session refresh module.
 * `alert`: An alert is a database entry that contains the details of a change in the JS file.
 * `authModule`: An auth module is a python program that will be used to authenticate the user with the target.
 * `sessionRefreshModule`: A session refresh module is a python program that will be used to refresh the session with the target.
@@ -73,14 +73,14 @@ Within Kanshi there are several types of monitoring configurations:
 * HTML Page JS Filename Extraction with Auth Module
 * HTML Page JS Filename Extraction with Provided Cookies
 
-These 4 different configurations describe the different ways the Kanshi will retrieve the JS file that will be monitored.
+These 4 different configurations describe the different ways Kanshi will retrieve the JS file that will be monitored.
 
 ### Simple JS Monitoring
-This is the simplest of the four types. In this case, no authentication or extraction of the JS file name. There is simply a file such as `main.js` which is updated with the most recent version of the JS contents. In this situation, simply provide Kanshi with a URL and time period and that file will be monitored.
+This is the simplest of the four types. In this case, there is no authentication or extraction of the JS file name. There is simply a file such as `main.js` which is updated with the most recent version of the JS contents. In this situation, simply provide Kanshi with a URL and time period and that file will be monitored.
 
 
-### HTML Page JS Filename Extraction 
-In this type, the JS file changes with each new version of the software (for example, it contains a hash or something of the like). In this scenario, we must provide Kanshi with a consistent page from which the JS file location name can be extracted with a regular expression, and then to a regular expression to do the extraction. Once this is in place, Kanshi will reach out to the specified page, extract the JS file name, and then proceed to monitor that JS file. 
+### HTML Page JS Filename Extraction
+In this type, the JS file changes with each new version of the software (for example, it contains a hash or something of the like). In this scenario, we must provide Kanshi with a consistent page from which the JS file location name can be extracted with a regular expression, and then provide a regular expression to do the extraction. Once this is in place, Kanshi will reach out to the specified page, extract the JS file name, and then proceed to monitor that JS file. 
 
 
 ### HTML Page JS Filename Extraction with Auth Module (Not Implemented)
